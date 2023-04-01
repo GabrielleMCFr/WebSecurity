@@ -1,0 +1,143 @@
+Securing Acme Bank: Defending Node Applications
+In this project, you’ll protect a banking application from SQL Injection, Cross-Site Request Forgery (CSRF), and Cross-Site Scripting (XSS) attacks, as well as insecure JavaScript.
+
+Acme Bank
+Welcome to Acme Bank! Acme Bank is a small credit union that provides assistance with deposits, loans, and a wide array of other financial services.
+
+While the skeleton of their web app has been completed, there are certain vulnerabilities that were overlooked.
+
+In this off-platform project, you will secure the application by:
+
+Protecting it against Cross-Site Scripting (XSS) Attacks by using helmet, securing cookies, validating and normalizing data with express-validator, and implementing alternative methods to prevent DOM-Based XSS attacks.
+Preventing SQL injection attacks by using prepared statements as well as validating input.
+Preventing Cross-Site Request Forgery (CSRF) attacks by implementing csurf middleware and updating certain view pages to secure any cross-site request vulnerabilities.
+Desktop requirements
+Have Node downloaded on your local machine
+Have a code editor of your choice installed
+Have an empty browser window ready to go
+Have a terminal window open
+Have a DB browser like DBBrowser installed to view the .db file
+Explore starter code and app
+Download the project, unzip the file, and open the folder in a code editor. All of the application code is in app.js. The views folder contains the .ejs files for the different pages.
+
+Making sure your terminal window is open to your project folder, type the following command:
+
+node app
+In your browser window navigate to http://localhost:3000/ in order to see the log in page:
+
+An image showing a code editor with the starter code on the left side of the screen and a browser window with the login page on the right side of the screen.
+
+Next, open the .db file with a SQL browser to see the different tables containing user information and credit union records. A common application is DBBrowser:
+
+An image showing a DBBrowswer window. It shows the database has four tables: public_forum, public_ledger, sqlite_sequence, and users. It also shows that the user table contains five users: admin, user1, user2, user3, and 123.
+
+The database provided already has a number of users. Let’s log in to the application with one set of credentials:
+
+username: admin
+password: C0deC@demy_Rocks!
+
+Once logged in, you should be redirected to a home page with a few navigation links listed. Make a note of which pages match up to which .ejs files.
+
+Protect against XSS attacks
+The application is currently vulnerable to several different kinds of XSS attacks, particularly in the forum where users can upload code via the comment box. Let’s add layers of security to prevent any attacks.
+
+Securing your headers
+Require the helmet package and implement the middleware.
+NOTE: The package is already included in the application.
+
+Secure the application’s cookies by adding the appropriate properties/values.
+Sanitize and validate inputs on the public forum
+Next, we’ll make use of express-validator in order to sanitize and validate any input data. This prevents an attacker from manipulating data before it reaches our database/backend server.
+
+Require the express-validator package.
+
+Protect the POST request for "/public_forum" by validating the req.body.comment. When choosing an express-validator method to validate comment input, make sure to consider which restrictions are reasonable. Users need to have some freedom in what they can type into the input field, but shouldn’t be able to attack our system.
+
+Your code should look as follows:
+
+var comment = // your validation code;
+NOTE: We’ll be making use of this variable in the next following tasks related to SQL injection.
+
+Awesome, this page is looking a lot safer already!
+
+Protect against SQL injections
+Update the POST request for "/auth", which is currently vulnerable to SQL injections.
+
+Update the SQL query to use prepared statements instead of string interpolation for the username and password. SQL can use variables in order to prevent any direct manipulation of the database.
+
+Address Vulnerability on the “Public Forum” page
+An image showing a page with multiple forum posts from the user "Admin". The posts read "This is a message!" and "this is another message". Beneath the forum posts is an empty text field and a Submit Query button.
+
+Protect the POST request for "/public_forum" by using SQL parameters for the request queries comment and username.
+Address vulnerability on the “Public Ledger” page
+An image showing a page titled "Results". It has a table recording id numbers of transactions, senders, recipients, and the amount of money sent. Below the table is a field to search by ID, a Submit Query button, and link that says "Go Back".
+
+Here, users can take advantage of this search query feature to inject SQL queries.
+
+Protect the GET request for "/public_ledger" by using SQL parameters for the request queries, id and amount.
+
+Make sure to parse the value from the request as an integer to make sure the data is standardized.
+
+Now, every SQL query is a little safer from malicious user input!
+
+Cross-site request (CSRF) attack prevention
+An image of the Acme Bank transfers page. The page says "to transfer money, please fill out the following form". The first input box has the label "Account to Send Money To" and the second input box has the label "Amount to Send". Beneath the input boxes is a "Send" button and link that says "Go Back".
+
+So far, we’ve successfully protected our application from XSS and SQL injections attacks, but we’ve yet to secure it from attackers riding our session via a CSRF attack.
+
+Require the csurf and cookie-parser packages and store them in two variables called csurf and cookieParser.
+
+Set up the cookie-parser middleware.
+
+Configure the middleware for the csrf package and store it in a variable named csrfMiddleware.
+
+In this situation, we want the cookie to have the sameSite property set to "none".
+
+Create a middleware and add it to appropriate endpoints
+The middleware that checks if the property error.code is equal to "EBADCSRFTOKEN". If so, you’ll set a status code of 403 along with the message "EBADCSRFTOKEN". You can use an if/else statement in order to handle the logic and make sure to use the named parameters: error, and next.
+
+For the GET and POST requests of "/transfer", add the csrfMiddleware before continuing with the request.
+
+Make use of the csrf token in our view page. ​​In transfers.ejs add the csrf input element. Give it the name attribute of _csrf and the value attribute of "<%= csrfToken %>". Remember to make it a hidden element.
+
+This transfer request form will now error if there is an invalid or missing CSRF token!
+
+Path traversal protection
+The POST request for the "/download" endpoint allows you to download personal records. The user input combined with the use of fs in the code means there’s a file path traversal vulnerability!
+
+if(request.session.loggedin) {
+    file_name = request.session.file_history;
+    response.render("download", { file_name });
+} ...
+Use the built-in package, path, in order to set the path starting from the current working directory followed by the string "/history_files/", and then the variable file_name. Store this value in a variable called root_directory.
+
+Your code should look as follows:
+
+const root_directory = // your code to set the path;
+Create a variable called rootDir and assign it to "history_files\\". Normalize the filePath variable and store the value in a variable called fileName.
+
+Within the try/catch block, check if the filename variable contains the value of rootDir. If it doesn’t, set the response to response.end("File not found");. Otherwise, return the content.
+
+BONUS: Adding a linter
+You can install a linter package in order to have a consistent format across all your JavaScript files. One popular package is eslint.
+
+Install eslint with npm by using this terminal command:
+
+​​npm install eslint --save-dev
+An image showing that the "npm install eslint --save-dev" command successfully added and audited packages in order to complete the installation.
+
+From here you can configure an eslint file with the following command:
+
+npx eslint --init
+And image showing that the "npx eslint --init" command will ask the question "How would you like to use ESLing?". There are three option: 1. To check syntax only, 2. To check syntax and find problems, 3. To check syntax, find problems, and enforce code style
+
+This will create an .eslintrc file for you where you can set all the rules for your syntax and formatting rules.
+
+Review
+Congratulations on securing Acme Bank!
+
+If you’ve had trouble, this is the project walkthrough video:
+
+
+
+As you can see, there are various ways that an attacker can penetrate a site and retrieve important data. It’s always important to take different measures when securing an application since there’s no silver bullet. We secured HTTP headers, validated and sanitized user inputs, used prepared SQL statements, static code analysis tools, and implemented various middleware to prevent common web attacks! Apply these techniques in your future web development practice!
